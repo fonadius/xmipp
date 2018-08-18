@@ -1,7 +1,7 @@
 #include "benchmarkResult.h"
-#include <cmath>
 
 namespace cuFFTAdvisor {
+#include <cmath>
 
 void BenchmarkResult::print(FILE* stream) const {
   if (NULL == stream) return;
