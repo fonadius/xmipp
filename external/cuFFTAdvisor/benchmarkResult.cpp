@@ -1,4 +1,5 @@
 #include "benchmarkResult.h"
+#include <cmath>
 
 namespace cuFFTAdvisor {
 
