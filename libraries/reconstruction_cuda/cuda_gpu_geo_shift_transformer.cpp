@@ -25,10 +25,21 @@
 
 #include <cuda_runtime_api.h>
 #include "cuda_gpu_geo_shift_transformer.h"
-#include "cuda_xmipp_utils.cpp"
+//#include "cuda_xmipp_utils.cpp"
+#include <cufft.h>
 #include "cuda_gpu_geo_shift_transformer.cu"
 
 template class GeoShiftTransformer<float> ;
+
+#undef gpuErrchk
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true);
+
+extern void createPlanFFT(size_t Xdim, size_t Ydim, size_t Ndim, size_t Zdim, bool forward, cufftHandle *plan);
+
+
+extern void createPlanFFTStream(int Xdim, int Ydim, int Ndim, int Zdim,
+		bool forward, cufftHandle *plan, myStreamHandle &myStream);
 
 template<typename T>
 void GeoShiftTransformer<T>::release() {
