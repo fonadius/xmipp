@@ -51,6 +51,7 @@ gmon.out
 /lib
 /install/xmipp.conf
 /tests/data
+/external/cuFFTAdvisor/cufftAdv
 
 # Ignore version file
 .devel_version

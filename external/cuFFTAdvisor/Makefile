@@ -11,6 +11,9 @@ CXXFLAGS := -O3 --use_fast_math -Xcompiler -fPIC -std=c++11 -Wno-deprecated-gpu-
 # All Target
 all: libcuFFTAdvisor.so
 
+cufftAdv: $(OBJ_FILES)
+	nvcc -lcufft -o $@ $^
+
 # Tool invocations
 libcuFFTAdvisor.so: $(OBJ_FILES)
 	nvcc $(LDFLAGS) -o $@ $^
