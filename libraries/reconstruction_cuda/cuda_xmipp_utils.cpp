@@ -8,6 +8,7 @@
 #include <cufftXt.h>
 #include <cuComplex.h>
 #include <nvml.h>
+#include <iostream>
 
 #include <time.h>
 #include <sys/time.h>
@@ -109,14 +110,26 @@ bool getBestFFTSize(int imgsToProcess, int origXSize, int origYSize, int &batchS
 
     size_t freeMem = getFreeMem(device);
     std::vector<cuFFTAdvisor::BenchmarkResult const *> *results =
-            cuFFTAdvisor::Advisor::find(30, device,
-                    origXSize, origYSize, 1, imgsToProcess,
-                    cuFFTAdvisor::Tristate::TRUE,
-                    cuFFTAdvisor:: Tristate::TRUE,
-                    cuFFTAdvisor::Tristate::TRUE,
-                    cuFFTAdvisor::Tristate::FALSE,
-                    cuFFTAdvisor::Tristate::TRUE, sigPercChange,
-                    freeMem - reserveMem, false, squareOnly, crop);
+        cuFFTAdvisor::Advisor::find(30, device,
+                origXSize, origYSize, 1, imgsToProcess,
+                cuFFTAdvisor::Tristate::TRUE,
+                cuFFTAdvisor:: Tristate::TRUE,
+                cuFFTAdvisor::Tristate::TRUE,
+                cuFFTAdvisor::Tristate::FALSE,
+                cuFFTAdvisor::Tristate::TRUE, sigPercChange,
+                freeMem - reserveMem, false, squareOnly, crop);
+    if ((results->size() == 0) and (xSize*ySize < 500000)) {
+        std::cout << "Warning: cuFFTAdvisor was not able to provide any results. This is probably caused by combination of small images and too restrictive parameters. Trying again with double maxSignalInc(" << (sigPercChange*2)
+            << ")." << std::endl;
+        results = cuFFTAdvisor::Advisor::find(30, device,
+                origXSize, origYSize, 1, imgsToProcess,
+                cuFFTAdvisor::Tristate::TRUE,
+                cuFFTAdvisor:: Tristate::TRUE,
+                cuFFTAdvisor::Tristate::TRUE,
+                cuFFTAdvisor::Tristate::FALSE,
+                cuFFTAdvisor::Tristate::TRUE, sigPercChange * 2,
+                freeMem - reserveMem, false, squareOnly, crop);
+    }
 
     if (results->size() == 0) {
         if (verbose) {
@@ -127,7 +140,9 @@ bool getBestFFTSize(int imgsToProcess, int origXSize, int origYSize, int &batchS
         }
         xSize = origXSize;
         ySize = origYSize;
-        batchSize = std::floor((freeMem - reserveMem) / (xSize * ySize * sizeof(float)));
+        float itemSizeMb = (xSize * ySize * sizeof(float)) / (1024.0 * 1024.0);
+        batchSize = std::floor((freeMem - reserveMem) / itemSizeMb);
+        batchSize = std::min(batchSize, imgsToProcess); 
         return false;
     }
     batchSize = results->at(0)->transform->N;
